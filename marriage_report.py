@@ -8,8 +8,8 @@ Usage:
 """
 import os
 import sqlite3
+import pandas as pd
 from create_relationships import db_path, script_dir
-import pandas as pd 
 
 def main():
     # Query DB for list of married couples
@@ -27,20 +27,20 @@ def get_married_couples():
     """
     con = sqlite3.connect(db_path)
     cur = con.cursor()
-
-    # SQL query to get all married couples
-    married_couples_query = """
-    SELECT person1.name, person2.name, start_date
-    FROM relationships
-    JOIN people person1 ON person1_id = person1.id
-    JOIN people person2 ON person2_id = person2.id
-    WHERE type = 'spouse';
+    
+    # Query to retrieve married couples' information
+    query = """
+    SELECT p1.name, p2.name, r.start_date
+    FROM people AS p1
+    INNER JOIN relationships AS r ON p1.id = r.person1_id
+    INNER JOIN people AS p2 ON r.person2_id = p2.id
+    WHERE r.type = 'spouse'
     """
-
-    cur.execute(married_couples_query)
+    
+    cur.execute(query)
     married_couples = cur.fetchall()
-
     con.close()
+    
     return married_couples
 
 def save_married_couples_csv(married_couples, csv_path):
@@ -51,9 +51,12 @@ def save_married_couples_csv(married_couples, csv_path):
         married_couples (list): (name1, name2, start_date) of married couples
         csv_path (str): Path of CSV file
     """
-    df = pd.DataFrame(married_couples, columns=['Name 1', 'Name 2', 'Wedding Anniversary'])
+    # Convert the list of tuples to a DataFrame
+    columns = ['Name 1', 'Name 2', 'Start Date']
+    df = pd.DataFrame(married_couples, columns=columns)
+    
+    # Save DataFrame to CSV file
     df.to_csv(csv_path, index=False)
-    return
 
-if __name__ == '__main__':
-   main()
+if __name__ == '_main_':
+    main()
